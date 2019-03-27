@@ -21,13 +21,13 @@ install_corretto() {
   local url="${CORRETTO_URL:-https://d2znqt9b1bc64u.cloudfront.net/amazon-corretto-8.202.08.2-linux-x64.tar.gz}"
   local checksum="${CORRETTO_CHECKSUM:-23a4e82eb9737dfd34c748b63f8119f7}"
 
+  echo "-----> Installing Corretto JDK"
   if [ -n "$checksum" ]; then
     local jdk_downloaded_file="/tmp/jdk.tgz"
-    echo "-----> Downloading Corretto JDK"
+    echo "       - downloading"
     curl --retry 3 -o "$jdk_downloaded_file" -sL "$url"
-    echo "       - done"
 
-    echo "-----> Verifying checksum ($checksum)"
+    echo "       - verifying checksum ($checksum)"
     actual_checksum="$(md5sum ${jdk_downloaded_file} | awk '{ print $1 }')"
     if [ "$actual_checksum" != "$checksum" ]; then
       echo "Invalid checksum!"
@@ -35,18 +35,21 @@ install_corretto() {
       echo "Found    => $actual_checksum"
       exit 1
     fi
-    echo "       - done"
 
-    echo "-----> Installing Corretto JDK"
+    echo "       - unpacking"
     tar xzmf "$jdk_downloaded_file" -C "$jdk_dir" --strip-components=1
-    echo "       - done"
   else
-    echo "-----> Installing Corretto JDK"
+    echo "       - downloading and unpacking"
     curl --retry 3 -sL "$url" | tar xzm -C "$jdk_dir" --strip-components=1
-    echo "       - done"
   fi
 
-  # TODO remove cruft (samples, demo, debug, etc)
+  echo "       - pruning"
+  rm -rf "${jdk_dir}/demo"
+  rm -rf "${jdk_dir}/src.zip"
+  rm -rf "${jdk_dir}/sample"
+  rm -rf "${jdk_dir}/man"
+  rm -rf "${jdk_dir}/sample"
+  echo "       - done"
 }
 
 create_profile_scripts() {
