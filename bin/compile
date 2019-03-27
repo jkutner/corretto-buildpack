@@ -12,43 +12,18 @@ source <(curl --retry 3 -fsSL "https://lang-common.s3.amazonaws.com/buildpack-st
 
 export_env $ENV_DIR "."
 
-get_property() {
-  local propFile="$BUILD_DIR/system.properties"
-  local propName="${1:?}"
-  local propDefault="${2:-""}"
-
-  if [ -f ${propFile} ]; then
-    local propValue=$(sed '/^\#/d' ${propFile} | grep "${propName}"  | tail -n 1 | cut -d "=" -f2- | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
-    echo "${propValue:-$propDefault}"
-  else
-    echo "${propDefault}"
-  fi
-}
-
-create_adoptopenjdk_url() {
-  local version="${1:-8}"
-  local impl="${2:-hotspot}"
-  local release="${3:-latest}"
-  echo "https://api.adoptopenjdk.net/v2/binary/nightly/openjdk${version}?openjdk_impl=${impl}&os=linux&arch=x64&release=${release}&type=jdk"
-}
-
-install_adoptopenjdk() {
+install_corretto() {
   local jdk_dir=${1:?}
 
   rm -rf $jdk_dir # clobber any previously installed jdk
   mkdir -p $jdk_dir
 
-  # parse version
-  local version="${ADOPTOPENJDK_VERSION:-$(get_property "adoptopenjdk.version" "8")}"
-  local impl="${ADOPTOPENJDK_IMPL:-$(get_property "adoptopenjdk.impl" "hotspot")}"
-  local release="${ADOPTOPENJDK_RELEASE:-$(get_property "adoptopenjdk.release" "latest")}"
-  local checksum="${ADOPTOPENJDK_CHECKSUM:-$(get_property "adoptopenjdk.checksum")}"
-
-  local url="$(create_adoptopenjdk_url "$version" "$impl" "$release")"
+  local url="${CORRETTO_URL:-https://d2znqt9b1bc64u.cloudfront.net/amazon-corretto-8.202.08.2-linux-x64.tar.gz}"
+  local checksum="${CORRETTO_CHECKSUM:-23a4e82eb9737dfd34c748b63f8119f7}"
 
   if [ -n "$checksum" ]; then
     local jdk_downloaded_file="/tmp/jdk.tgz"
-    echo "-----> Downloading AdoptOpenJDK ${version} (${impl}, ${release})"
+    echo "-----> Downloading Corretto JDK"
     curl --retry 3 -o "$jdk_downloaded_file" -sL "$url"
     echo "       - done"
 
@@ -62,14 +37,16 @@ install_adoptopenjdk() {
     fi
     echo "       - done"
 
-    echo "-----> Installing AdoptOpenJDK ${version} (${impl}, ${release})"
+    echo "-----> Installing Corretto JDK"
     tar xzmf "$jdk_downloaded_file" -C "$jdk_dir" --strip-components=1
     echo "       - done"
   else
-    echo "-----> Installing AdoptOpenJDK ${version} (${impl}, ${release})"
+    echo "-----> Installing Corretto JDK"
     curl --retry 3 -sL "$url" | tar xzm -C "$jdk_dir" --strip-components=1
     echo "       - done"
   fi
+
+  # TODO remove cruft (samples, demo, debug, etc)
 }
 
 create_profile_scripts() {
@@ -79,7 +56,7 @@ create_profile_scripts() {
   mkdir -p $home/.profile.d
 
   echo "-----> Configuring"
-  curl -o $home/.profile.d/adoptopenjdk.sh -sL "$url/opt/jvmcommon.sh"
+  curl -o $home/.profile.d/corretto.sh -sL "$url/opt/jvmcommon.sh"
   curl -o $home/.profile.d/jdbc.sh -sL "$url/opt/jdbc.sh"
   echo "       - done"
 }
@@ -103,6 +80,6 @@ OPT_DIR=$BP_DIR/../opt/
 JDK_DIR="$BUILD_DIR/.jdk"
 JVM_COMMON_URL="https://raw.githubusercontent.com/heroku/heroku-buildpack-jvm-common/master/"
 
-install_adoptopenjdk "$JDK_DIR"
+install_corretto "$JDK_DIR"
 create_profile_scripts "$BUILD_DIR" "$JVM_COMMON_URL"
 create_export_script "$JDK_DIR" "$(pwd)"

@@ -1,33 +1,24 @@
-# AdoptOpenJDK Buildpack
+# Amazon Corretto JDK Buildpack
 
-This [buildpack](https://devcenter.heroku.com/articles/buildpacks) will install the [AdoptOpenJDK](https://adoptopenjdk.net/) runtimes.
+This [buildpack](https://devcenter.heroku.com/articles/buildpacks) will install the [Amazon Corretto](https://docs.aws.amazon.com/corretto/index.html) runtimes.
 
 ## Usage
 
 This buildpack can be used with the [Heroku Java buildpack](https://github.com/heroku/heroku-buildpack-java/blob/master/bin/compile) to replace the default JDK by running:
 
 ```
-$ heroku buildpacks:set jdk/adoptopenjdk
+$ heroku buildpacks:set jdk/corretto
 $ heroku buildpacks:add heroku/java
 ```
 
 ## Customizing
 
-You can customize the version of AdoptOpenJDK by setting the following config vars:
+You can customize the version of Corretto by setting the following config vars:
 
-* `ADOPTOPENJDK_VERSION` (default: 8)
-* `ADOPTOPENJDK_IMPL` (default: hotspot)
-* `ADOPTOPENJDK_RELEASE` (default: latest)
-* `ADOPTOPENJDK_CHECKSUM` (no default)
+* `CORRETTO_URL`
+* `CORRETTO_CHECKSUM`
 
-Alternatively, you can codify these in your app by creating a `system.properties` file with contents like this:
-
-```
-adoptopenjdk.version=8
-adoptopenjdk.impl=hotspot
-adoptopenjdk.release=latest
-```
-For more information on acceptable values, see the [AdoptOpenJDK API docs](https://api.adoptopenjdk.net/).
+For more information on acceptable values, see the [Corretto downloads page](https://docs.aws.amazon.com/corretto/latest/corretto-8-ug/downloads-list.html).
 
 ## License
 
